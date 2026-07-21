@@ -1,5 +1,9 @@
 # agui-framework
 
+<p align="center">
+  <img src="docs/logo.svg" alt="agui-framework" width="200"/>
+</p>
+
 A TypeScript SDK for building AI agent-powered applications. agui-framework provides a complete toolkit for creating, orchestrating, and deploying LLM-based agents with multi-provider support, real-time streaming, state management, persistence, and the AG-UI protocol for frontend communication.
 
 ## Features
