@@ -95,7 +95,7 @@ interface AgentConfig {
   multimodalOutput?: { image?: boolean; audio?: boolean }
   costLimit?: number                    // Runtime cost limit in USD (0 = no limit)
   maxContextWindow?: number             // Override model's context window from catalog
-  outputSchema?: Record<string, unknown> // JSON Schema for structured output
+  sharedState?: SharedState             // Global SharedState instance; registers setState/getState/deleteState tools on the agent
 }
 ```
 
@@ -250,7 +250,7 @@ All summarization config fields are optional. When omitted, the middleware inher
 ```typescript
 const caps = agent.getCapabilities()
 // {
-//   identity: { name: 'gpt-4o', type: 'agui-framework', version: '0.2.1', provider: 'openai' },
+//   identity: { name: 'gpt-4o', type: 'agui-framework', version: '0.2.2', provider: 'openai' },
 //   transport: { streaming: true, resumable: true },
 //   tools: { supported: true, items: [...] },
 //   state: { snapshots: true, deltas: true, memory: true },

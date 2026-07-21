@@ -21,6 +21,12 @@ npm install ioredis          # RedisThreadStore
 npm install pg               # PostgresThreadStore
 ```
 
+### Optional long-term memory
+
+```bash
+npm install oxigraph         # OxigraphSemanticStore
+```
+
 ## Your First Agent
 
 Create an agent with a single LLM provider and run a prompt:
@@ -171,6 +177,64 @@ const response = await agent.run('What is the weather in Tokyo?')
 console.log(response)
 ```
 
+## Structured Output
+
+Force the agent to return valid JSON matching a schema using `structuredOutput` and `outputSchema`:
+
+```typescript
+import { Agent } from 'agui-framework'
+
+const agent = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'Extract structured data from text.',
+  structuredOutput: true,
+  outputSchema: {
+    name: 'extract_person',
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        age: { type: 'number' },
+        occupation: { type: 'string' },
+      },
+      required: ['name', 'occupation'],
+    },
+  },
+})
+
+const reply = await agent.run('Alice is a 30-year-old engineer.')
+console.log(reply)
+// {"name":"Alice","age":30,"occupation":"engineer"}
+```
+
+## State Management
+
+Each agent has a `StateManager` with per-thread `SharedState` instances for storing key-value data across a conversation:
+
+```typescript
+import { Agent } from 'agui-framework'
+
+const agent = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'You are a helpful assistant.',
+})
+
+const threadId = 'session-1'
+const state = agent.state.getOrCreateState(threadId)
+state.set('step', 1)
+
+await agent.run('Start the process', { threadId })
+
+agent.state.updateState(threadId, { step: 2, data: 'collected' })
+console.log(state.get('step'))  // 2
+console.log(state.get('data'))  // 'collected'
+
+// State snapshots are emitted as events and can be persisted
+// via ThreadStore.saveState()
+```
+
 ## Thread History
 
 Each conversation thread maintains its own message history. Pass a `threadId` to continue a conversation:
@@ -182,6 +246,34 @@ await agent.run('Hi, my name is Alice', { threadId })
 await agent.run('What is my name?', { threadId })
 // The agent remembers "Alice" from context
 ```
+
+## Long-Term Memory (LTM)
+
+Beyond thread-scoped history, the agent can retain facts across sessions using an RDF-based semantic store. Install oxigraph:
+
+```bash
+npm install oxigraph
+```
+
+Then attach the LTM middleware:
+
+```typescript
+import { Agent, OxigraphSemanticStore, createLTMMiddleware } from 'agui-framework'
+
+const agent = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'You are a helpful assistant.',
+})
+
+agent.use(createLTMMiddleware(new OxigraphSemanticStore()))
+
+await agent.run('Remember I prefer short answers', { userId: 'alice' })
+await agent.run('What do I prefer?', { userId: 'alice' })
+// Agent recalls "prefersStyle: short" from the semantic store
+```
+
+The agent autonomously calls injected tools (`remember`, `recall`, `forget`) to manage its own long-term memory. Facts are stored per-user in named RDF graphs, isolated across tenants. The `userId` field in `RunContext` determines the memory scope.
 
 ## Next Steps
 

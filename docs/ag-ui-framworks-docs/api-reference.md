@@ -10,7 +10,7 @@ Complete reference for all public exports, classes, interfaces, types, enums, an
 | `agui-framework/server`   | Server-side utilities (Express routes, WebSocket, loader) |
 | `agui-framework/client`   | Client SDK (`AguiClient`)                |
 | `agui-framework/client/react` | React hooks (`useAgent`, `useStream`, `useThread`, `useCoAgent`) |
-| `agui-framework/store`    | Persistence stores (Redis, Postgres)     |
+| `agui-framework/store`    | Persistence stores (Redis, Postgres, semantic) |
 
 ## Classes
 
@@ -374,6 +374,10 @@ class RedisThreadStore implements ThreadStore {
 class PostgresThreadStore implements ThreadStore {
   constructor(connectionString: string, config?: StoreConfig)
 }
+
+class OxigraphSemanticStore implements SemanticStore {
+  constructor()
+}
 ```
 
 ## Enums
@@ -401,6 +405,7 @@ function createHandoffTool(name: string, description: string, targetAgentId: str
 function createFilterToolCallsMiddleware(options: FilterToolCallsOptions): MiddlewareFunction
 function createLoggingMiddleware(logger?: (msg: string) => void): MiddlewareFunction
 function createSummarizationMiddleware(config?: SummarizationConfig): MiddlewareFunction
+function createLTMMiddleware(store: SemanticStore): MiddlewareFunction
 function runAgentGraph(graph: AgentGraph, manager: MultiAgentManager, agents: Map<string, string>, initialInput?: string): Promise<string>
 ```
 
@@ -482,6 +487,7 @@ interface AgentConfig {
   multimodalInput?: { image?: boolean; audio?: boolean; video?: boolean; pdf?: boolean; file?: boolean }
   multimodalOutput?: { image?: boolean; audio?: boolean }
   costLimit?: number; maxContextWindow?: number; outputSchema?: Record<string, unknown>
+  sharedState?: SharedState
 }
 
 interface RunContext {
@@ -576,6 +582,21 @@ interface ThreadStore {
   saveRun(runId, threadId, data): Promise<void>
   getRun(runId): Promise<RunData | null>
   searchMessages(threadId, query, limit?): Promise<Message[]>
+}
+
+interface Fact {
+  subject: string; predicate: string; object: string
+  timestamp: number; ttl?: number
+}
+
+interface SemanticMemoryQuery {
+  predicates?: string[]; limit?: number
+}
+
+interface SemanticStore {
+  remember(userId: string, facts: Fact[]): Promise<void>
+  recall(userId: string, query?: SemanticMemoryQuery): Promise<Fact[]>
+  forget(userId: string, predicate?: string): Promise<void>
 }
 ```
 

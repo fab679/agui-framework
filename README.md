@@ -8,7 +8,9 @@ A TypeScript SDK for building AI agent-powered applications. agui-framework prov
 - **Multi-LLM providers** -- OpenAI, Anthropic, Ollama, and Fireworks support with a common abstraction
 - **Real-time streaming** -- AsyncGenerator-based streaming with event callbacks
 - **Event system** -- Publish/subscribe EventBus with history, compaction, and piping
-- **State management** -- Thread-isolated SharedState with versioning, diffing, merging, and conflict resolution
+- **Structured output** -- JSON Schema-enforced responses via `response_format`
+- **State management** -- Thread-isolated SharedState with versioning, diffing, merging, and conflict resolution; agents can autonomously read/write global shared state via built-in setState/getState/deleteState tools
+- **Long-term memory** -- Optional RDF-based semantic store (Oxigraph) with self-managing remember/recall/forget tools
 - **AG-UI protocol** -- Full SSE-based protocol encoding, validation, and event compaction
 - **Multi-agent patterns** -- Delegation, cyclic handoff, capability routing, and directed graph workflows
 - **Middleware pipeline** -- Composable event interception and transformation
@@ -33,6 +35,12 @@ Optional persistence dependencies:
 ```bash
 npm install ioredis          # RedisThreadStore
 npm install pg               # PostgresThreadStore
+```
+
+Optional long-term memory:
+
+```bash
+npm install oxigraph         # OxigraphSemanticStore
 ```
 
 ## Quick Start
@@ -98,7 +106,67 @@ const response = await agent.run("What is the weather in Paris?");
 console.log(response);
 ```
 
-### 4. Multi-Provider Configuration
+### 4. Structured Output
+
+```typescript
+import { Agent } from "agui-framework";
+
+const agent = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  instructions: "Extract structured data from text.",
+  structuredOutput: true,
+  outputSchema: {
+    name: "extract_person",
+    schema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        age: { type: "number" },
+        occupation: { type: "string" },
+      },
+      required: ["name", "occupation"],
+    },
+  },
+});
+
+const response = await agent.run("Alice is a 30-year-old engineer.");
+console.log(response); // JSON string: { "name": "Alice", "age": 30, "occupation": "engineer" }
+```
+
+### 5. Global Shared State
+
+A `SharedState` instance can be passed to one or more agents. The agent automatically registers `setState`/`getState`/`deleteState` tools that read and write the shared state — no thread scoping required.
+
+```typescript
+import { Agent, SharedState } from "agui-framework";
+
+const shared = new SharedState({ theme: "dark", maxRetries: 3 });
+
+const agent = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  instructions: "You are a helpful assistant. Use setState to remember user preferences.",
+  sharedState: shared,  // enables setState/getState/deleteState tools
+});
+
+const response = await agent.run("Remember my favorite color is blue.");
+// The agent calls setState("favoriteColor", "blue") autonomously
+console.log(shared.get("favoriteColor")); // "blue"
+
+// Multiple agents or users can share the same state:
+const agent2 = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  instructions: "You know the user's preferences.",
+  sharedState: shared,
+});
+
+const reply = await agent2.run("What is my favorite color?");
+// The agent calls getState("favoriteColor") and responds "blue"
+```
+
+### 6. Multi-Provider Configuration
 
 ```typescript
 import { Agent } from "agui-framework";
@@ -126,7 +194,28 @@ const fwAgent = new Agent({
 });
 ```
 
-### 5. Environment-Based Configuration
+### 7. Long-Term Memory
+
+```typescript
+import { Agent, OxigraphSemanticStore, createLTMMiddleware } from "agui-framework";
+
+const store = new OxigraphSemanticStore();
+const agent = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  instructions: "You are a helpful assistant.",
+});
+
+agent.use(createLTMMiddleware(store));
+
+// The agent autonomously calls remember/recall/forget tools
+const reply = await agent.run(
+  "Remember I prefer short answers.",
+  { userId: "alice" },
+);
+```
+
+### 8. Environment-Based Configuration
 
 ```env
 AGUI_PROVIDER=openai
@@ -179,6 +268,7 @@ console.log(reply);
 | `humanInterventions`     | `boolean`                 | `false`          | Mid-run intervention                                                                          |
 | `humanFeedback`          | `boolean`                 | `false`          | Human feedback (ratings)                                                                      |
 | `approveWithEdits`       | `boolean`                 | `false`          | Approve with edits                                                                            |
+| `sharedState`            | `SharedState`             | `undefined`      | Global SharedState instance; registers setState/getState/deleteState tools on the agent       |
 
 ### Environment Variables
 
@@ -196,6 +286,7 @@ agui-framework
   Agent            -- Orchestrates LLM calls, tools, events, state, persistence
   EventBus         -- In-process pub/sub with history and compaction
   StateManager     -- Thread-isolated SharedState instances
+  SharedState      -- Global key-value store passed to agents via sharedState config; accessed via built-in setState/getState/deleteState tools
   ProtocolEncoder  -- Event serialization and SSE encoding
   ProtocolValidator-- Input and event validation
   BaseLLMProvider  -- Abstract LLM provider (OpenAI, Anthropic, Ollama, Fireworks)
@@ -203,6 +294,8 @@ agui-framework
   MultiAgentManager-- Agent delegation, cyclic handoff, capability routing, graph execution
   AgentGraph       -- Directed graph of agent nodes
   ThreadStore      -- Persistence interface (Memory, Redis, Postgres)
+  SemanticStore    -- RDF-based long-term memory interface (Oxigraph)
+  LTMiddleware     -- Self-managing remember/recall/forget middleware
   AguiClient       -- HTTP client for remote agent execution
   React hooks      -- useStream, useThread, useInterrupts, useCoAgent
 ```
@@ -214,7 +307,7 @@ agui-framework
 | [Getting Started](docs/ag-ui-framworks-docs/getting-started.md)   | Installation, prerequisites, first agent          |
 | [Agents](docs/ag-ui-framworks-docs/agents.md)                     | Agent class deep dive: config, tools, execution   |
 | [Events](docs/ag-ui-framworks-docs/events.md)                     | EventBus API, event types, subscriptions          |
-| [State Management](docs/ag-ui-framworks-docs/state-management.md) | SharedState, StateManager, thread isolation       |
+| [State Management](docs/ag-ui-framworks-docs/state-management.md) | SharedState, StateManager, thread isolation, global agent state tools |
 | [Protocol](docs/ag-ui-framworks-docs/protocol.md)                 | ProtocolEncoder, SSE, validation                  |
 | [Providers](docs/ag-ui-framworks-docs/providers.md)               | Provider architecture, custom providers           |
 | [Tools](docs/ag-ui-framworks-docs/tools.md)                       | ToolConfig, handlers, interrupts, delegation      |
@@ -301,6 +394,7 @@ interface AgentConfig {
   humanInterventions?: boolean;
   humanFeedback?: boolean;
   approveWithEdits?: boolean;
+  sharedState?: SharedState;
   multimodalInput?: {
     image?: boolean;
     audio?: boolean;
@@ -428,6 +522,21 @@ interface ThreadStore {
 ```
 
 Implementations: `MemoryThreadStore`, `RedisThreadStore`, `PostgresThreadStore`.
+
+### SemanticStore (Long-Term Memory)
+
+```typescript
+import { OxigraphSemanticStore } from "agui-framework";
+
+const store = new OxigraphSemanticStore();
+await store.remember("alice", [
+  { subject: "alice", predicate: "prefersModel", object: "gpt-4o", timestamp: Date.now() },
+]);
+const facts = await store.recall("alice"); // returns all facts for alice
+await store.forget("alice", "prefersModel"); // delete specific fact
+```
+
+The `createLTMMiddleware` wraps this store into the agent's execution pipeline, injecting `remember`/`recall`/`forget` tools so the agent manages its own memory. Each user's facts live in isolated named RDF graphs.
 
 ### Model Catalog & Cost Tracking
 

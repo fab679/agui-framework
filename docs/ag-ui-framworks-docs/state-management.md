@@ -268,6 +268,52 @@ StateManager
 
 Each thread's state is fully independent.
 
+## Global State Shared Across Agents
+
+A `SharedState` can be passed directly to an agent via `AgentConfig.sharedState`. When set, the agent automatically registers three built-in tools (`setState`, `getState`, `deleteState`) that operate on that global state — independent of any thread.
+
+Multiple agents or users can share the same `SharedState` instance, enabling cross-agent data sharing:
+
+```typescript
+import { Agent, SharedState } from 'agui-framework'
+
+const globalState = new SharedState({ theme: 'dark', maxRetries: 3 })
+
+const agentA = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'You are Agent A.',
+  sharedState: globalState,
+})
+
+const agentB = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'You are Agent B.',
+  sharedState: globalState,
+})
+
+// Both agents can read/write the same global state via tools:
+//   setState("preferences", { color: "blue", fontSize: 14 })
+//   getState("theme")         → "dark"
+//   deleteState("maxRetries")
+
+// Users can also update the state directly:
+globalState.set('mode', 'production')
+```
+
+### Tool Reference
+
+When `sharedState` is configured, the agent includes these tools:
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `setState` | `key: string`, `value: any` | Stores any JSON value under a key |
+| `getState` | `key: string` | Retrieves the value for a key |
+| `deleteState` | `key: string` | Removes a key from the state |
+
+The state shape is unknown ahead of time — any JSON-serializable value can be stored (strings, numbers, booleans, objects, arrays, null).
+
 ## Type Reference
 
 ```typescript
