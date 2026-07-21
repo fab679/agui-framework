@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="url(#g1)" stroke-width="4" opacity="0.15"/>
+
+  <!-- Node dots and connection lines representing agent network -->
+  <g stroke="url(#g1)" stroke-width="2.5" fill="none" opacity="0.5">
+    <line x1="256" y1="88" x2="128" y2="200"/>
+    <line x1="256" y1="88" x2="384" y2="200"/>
+    <line x1="128" y1="200" x2="256" y2="312"/>
+    <line x1="384" y1="200" x2="256" y2="312"/>
+    <line x1="128" y1="200" x2="96" y2="370"/>
+    <line x1="384" y1="200" x2="416" y2="370"/>
+    <line x1="96" y1="370" x2="256" y2="432"/>
+    <line x1="416" y1="370" x2="256" y2="432"/>
+    <line x1="256" y1="312" x2="96" y2="370"/>
+    <line x1="256" y1="312" x2="416" y2="370"/>
+  </g>
+
+  <!-- Node dots -->
+  <g fill="url(#g1)">
+    <circle cx="256" cy="88" r="8"/>
+    <circle cx="128" cy="200" r="6"/>
+    <circle cx="384" cy="200" r="6"/>
+    <circle cx="256" cy="312" r="7"/>
+    <circle cx="96" cy="370" r="5"/>
+    <circle cx="416" cy="370" r="5"/>
+    <circle cx="256" cy="432" r="6"/>
+  </g>
+
+  <!-- Central hexagonal AI node -->
+  <polygon points="256,136 306,166 306,226 256,256 206,226 206,166" fill="url(#g2)" opacity="0.15" stroke="url(#g2)" stroke-width="2.5"/>
+
+  <!-- Hexagon inner glow -->
+  <polygon points="256,148 296,172 296,218 256,242 216,218 216,172" fill="url(#g1)" opacity="0.08"/>
+
+  <!-- Small AI node in center -->
+  <circle cx="256" cy="196" r="14" fill="url(#g1)" opacity="0.9"/>
+  <circle cx="256" cy="196" r="6" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Flux lines from center node -->
+  <g stroke="#a855f7" stroke-width="1.5" opacity="0.3" fill="none">
+    <path d="M256,182 Q248,176 252,168"/>
+    <path d="M256,210 Q264,216 260,224"/>
+    <path d="M242,196 Q236,188 228,192"/>
+    <path d="M270,196 Q276,204 284,200"/>
+  </g>
+
+  <!-- Text -->
+  <text x="256" y="328" text-anchor="middle" font-family="'SF Pro Display', 'Inter', 'Segoe UI', sans-serif" font-size="42" font-weight="700" fill="url(#g1)" letter-spacing="6">AGUI</text>
+  <text x="256" y="370" text-anchor="middle" font-family="'SF Pro Display', 'Inter', 'Segoe UI', sans-serif" font-size="14" font-weight="400" fill="#8b5cf6" letter-spacing="8" opacity="0.7">FRAMEWORK</text>
+
+  <!-- Subtle bottom bar -->
+  <rect x="196" y="388" width="120" height="2" rx="1" fill="url(#g1)" opacity="0.3"/>
+</svg>
