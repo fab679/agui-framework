@@ -5,6 +5,7 @@ Draft proposals for extending agui-framework. Each proposal is a living document
 ## Contents
 
 - [Multi-Agent Router](#multi-agent-router) — Decision-driven graph routing for multi-agent workflows
+- [MCP Integration](#model-context-protocol-mcp-integration) — Connect agents to any MCP-compatible tool server
 - [Meta Events](#meta-events) — Annotations and signals independent of agent runs
 - [Generative User Interfaces](#generative-user-interfaces) — AI-generated interfaces without custom tool renderers
 
@@ -121,7 +122,131 @@ graph.setCapabilityRouter('router', {
 
 ---
 
-## Meta Events
+## Model Context Protocol (MCP) Integration
+
+**Status:** Implemented in v0.2.3
+
+Integration is complete. See:
+- `src/mcp/manager.ts` — `MCPClientManager` class managing connections and tool discovery
+- `src/mcp/types.ts` — `MCPServerConfig` type definition
+- `src/agent.ts` — `mcpServers` config field with auto-registration in constructor, `getTools()` and run/stream pipelines
+- `tests/mcp.test.ts` — InMemoryTransport integration test
+- `tests/mcp-manager.test.ts` — 15 unit tests covering discovery, invocation, error handling, and lifecycle
+
+### Summary
+
+Integrate the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) into agui-framework, allowing agents to discover and invoke tools exposed by any MCP-compatible server. MCP is an open standard (by Anthropic) that standardizes how LLM applications connect to external tools and data sources.
+
+### Architecture
+
+```
+Agent (MCP Host)
+  ├── MCPClientManager
+  │     ├── StdioClient ──── MCP Server A (local subprocess)
+  │     └── HttpClient ───── MCP Server B (remote, streamable HTTP)
+  │
+  ├── MCPToolAdapter ────── Converts MCP tools → ToolConfig[]
+  │
+  └── MCPMiddleware ─────── Registers/unregisters tools on agent lifecycle
+```
+
+### Configuration
+
+MCP servers are declared in `AgentConfig`:
+
+```typescript
+interface AgentConfig {
+  // ... existing fields
+  mcpServers?: MCPServerConfig[]
+}
+
+type MCPServerConfig =
+  | { transport: 'stdio'; command: string; args: string[]; env?: Record<string, string> }
+  | { transport: 'streamable-http'; url: string; headers?: Record<string, string> }
+```
+
+Example:
+
+```typescript
+const agent = new Agent({
+  model: 'gpt-4o',
+  provider: 'openai',
+  instructions: 'You are a helpful assistant.',
+  mcpServers: [
+    // Local filesystem tool server
+    { transport: 'stdio', command: 'node', args: ['mcp-servers/filesystem.js'] },
+    // Remote API tool server
+    { transport: 'streamable-http', url: 'https://mcp.example.com/tools', headers: { Authorization: 'Bearer sk-...' } },
+  ],
+})
+```
+
+### Tool Discovery and Mapping
+
+On agent initialization, the `MCPClientManager` connects to each configured server and calls `tools/list` to discover available tools. Each MCP tool is mapped to a `ToolConfig`:
+
+| MCP Field | ToolConfig Field |
+|-----------|-----------------|
+| `name` | `name` |
+| `description` | `description` |
+| `inputSchema` | `parameters` |
+| `callTool` handler | `handler` |
+
+The handler delegates back to the MCP client:
+
+```typescript
+handler: async (args, context) => {
+  const result = await mcpClient.callTool({
+    name: toolName,
+    arguments: args,
+  })
+  // MCP content items → string result
+  return result.content.map(c => c.text).join('\n')
+}
+```
+
+### Lifecycle
+
+| Phase | Action |
+|-------|--------|
+| Agent `constructor` | Creates `MCPClientManager`, connects to all configured servers, discovers and registers tools |
+| Agent `addTool(name)` | Warns if name collides with an MCP tool |
+| Agent `run` / `stream` | Tools are available alongside agent-defined tools |
+| Server notifications | `notifications/tools/list_changed` triggers re-discovery and tool list refresh |
+| Agent disposal | Disconnects all MCP clients, cleans up subprocesses |
+
+### MCP Resources and Prompts
+
+Beyond tools, MCP also defines **Resources** (read-only data like files, database records) and **Prompts** (reusable prompt templates). Future iterations could expose these as:
+
+- **Resources** → Read-only tools or context injection via middleware
+- **Prompts** → Pre-built instruction fragments the agent can reference by name
+
+### Error Handling
+
+- MCP server connection failures are non-fatal — the agent starts with a warning and retries on the next `run`
+- Tool call failures propagate the MCP `isError` flag and content back to the agent
+- Timeouts are configurable per-server
+
+### Implementation Plan
+
+1. Add `@modelcontextprotocol/sdk` as an optional peer dependency
+2. Create `src/mcp/` module with:
+   - `MCPClientManager` — manages connections to multiple servers
+   - `MCPToolAdapter` — converts MCP tool definitions to `ToolConfig`
+   - `MCPMiddleware` — lifecycle hook for tool registration/refresh
+3. Add `mcpServers` field to `AgentConfig` interface
+4. Integrate into Agent constructor — connect, discover, register
+5. Handle `tools/list_changed` notifications for dynamic tool updates
+6. Support reconnection and graceful shutdown
+7. Write integration tests with a local stdio MCP server
+
+### Security Considerations
+
+- MCP servers run as subprocesses or connect to remote endpoints — follow the same sandboxing as code execution tools
+- Server capability negotiation must respect `tools/list` permissions
+- Users should audit which MCP servers are connected (equivalent to approving tool definitions)
+- Streamable HTTP servers should support TLS and authentication headers
 
 **Status:** Draft
 **Author(s):** Markus Ecker (mail@mme.xyz)

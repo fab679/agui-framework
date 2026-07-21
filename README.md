@@ -12,6 +12,7 @@ A TypeScript SDK for building AI agent-powered applications. agui-framework prov
 - **State management** -- Thread-isolated SharedState with versioning, diffing, merging, and conflict resolution; agents can autonomously read/write global shared state via built-in setState/getState/deleteState tools
 - **Long-term memory** -- Optional RDF-based semantic store (Oxigraph) with self-managing remember/recall/forget tools
 - **AG-UI protocol** -- Full SSE-based protocol encoding, validation, and event compaction
+- **MCP (Model Context Protocol)** -- Connect to any MCP-compatible tool server via stdio or streamable HTTP; tools are auto-discovered and registered
 - **Multi-agent patterns** -- Delegation, cyclic handoff, capability routing, and directed graph workflows
 - **Middleware pipeline** -- Composable event interception and transformation
 - **Persistence** -- Memory, Redis, and Postgres thread stores
@@ -19,7 +20,8 @@ A TypeScript SDK for building AI agent-powered applications. agui-framework prov
 - **Model catalog** -- 44 models across 4 providers with pricing, context windows, and capabilities
 - **Cost & usage tracking** -- Per-run token usage, cost calculation, cumulative thread cost, budget limits
 - **WebSocket client** -- Full-duplex agent communication with run/stream/resume/capabilities
-- **React client hooks** -- useStream, useThread, useInterrupts, useCoAgent, useWebSocket, and more
+- **React client hooks** -- useStream, useThread, useInterrupts, useCoAgent, useWebSocket, useAgentState, useRunningAgents, useLiveState, and more
+- **State REST API** -- Server endpoints for reading/writing agent shared state; AguiClient methods and React hooks included
 - **Type safety** -- Full TypeScript with strict types across all modules
 
 ## Installation
@@ -166,7 +168,33 @@ const reply = await agent2.run("What is my favorite color?");
 // The agent calls getState("favoriteColor") and responds "blue"
 ```
 
-### 6. Multi-Provider Configuration
+### 6. MCP (Model Context Protocol)
+
+Connect any MCP-compatible tool server and use its tools automatically:
+
+```typescript
+import { Agent } from "agui-framework";
+
+const agent = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  instructions: "You have access to MCP tools.",
+  mcpServers: [
+    // Local subprocess via stdio
+    { transport: "stdio", command: "node", args: ["path/to/mcp-server.js"] },
+    // Remote server via streamable HTTP
+    { transport: "streamable-http", url: "https://mcp.example.com/tools" },
+  ],
+});
+
+// MCP tools are auto-discovered and merged into the agent's tool list
+const tools = agent.getTools(); // includes MCP tools + any configured tools
+
+// Tools are available during run/stream execution
+const response = await agent.run("Use the connected MCP tools.");
+```
+
+### 7. Multi-Provider Configuration
 
 ```typescript
 import { Agent } from "agui-framework";
@@ -194,7 +222,7 @@ const fwAgent = new Agent({
 });
 ```
 
-### 7. Long-Term Memory
+### 8. Long-Term Memory
 
 ```typescript
 import { Agent, OxigraphSemanticStore, createLTMMiddleware } from "agui-framework";
@@ -215,7 +243,7 @@ const reply = await agent.run(
 );
 ```
 
-### 8. Environment-Based Configuration
+### 9. Environment-Based Configuration
 
 ```env
 AGUI_PROVIDER=openai
@@ -269,6 +297,7 @@ console.log(reply);
 | `humanFeedback`          | `boolean`                 | `false`          | Human feedback (ratings)                                                                      |
 | `approveWithEdits`       | `boolean`                 | `false`          | Approve with edits                                                                            |
 | `sharedState`            | `SharedState`             | `undefined`      | Global SharedState instance; registers setState/getState/deleteState tools on the agent       |
+| `mcpServers`             | `MCPServerConfig[]`       | `undefined`      | MCP server configurations; connects on init and registers auto-discovered tools                |
 
 ### Environment Variables
 
@@ -287,6 +316,7 @@ agui-framework
   EventBus         -- In-process pub/sub with history and compaction
   StateManager     -- Thread-isolated SharedState instances
   SharedState      -- Global key-value store passed to agents via sharedState config; accessed via built-in setState/getState/deleteState tools
+  MCPClientManager -- Connects to MCP servers, discovers tools, and registers them as ToolConfig entries
   ProtocolEncoder  -- Event serialization and SSE encoding
   ProtocolValidator-- Input and event validation
   BaseLLMProvider  -- Abstract LLM provider (OpenAI, Anthropic, Ollama, Fireworks)
@@ -313,6 +343,7 @@ agui-framework
 | [Tools](docs/ag-ui-framworks-docs/tools.md)                       | ToolConfig, handlers, interrupts, delegation      |
 | [Architecture](docs/ag-ui-framworks-docs/architecture.md)         | Module relationships, data flow, extension points |
 | [API Reference](docs/ag-ui-framworks-docs/api-reference.md)       | Complete API reference organized by module        |
+| [Future Integrations](docs/future-integrations.md)                | Draft proposals for router, meta events, GAI      |
 | [Examples](docs/ag-ui-framworks-docs/examples.md)                 | Multi-agent, graph, persistence, React, Express   |
 | [AG-UI Agents](docs/ag-ui/Agents.md)                              | AG-UI protocol agent implementation               |
 | [AG-UI Events](docs/ag-ui/Events.md)                              | AG-UI event format and types implementation       |
@@ -395,6 +426,7 @@ interface AgentConfig {
   humanFeedback?: boolean;
   approveWithEdits?: boolean;
   sharedState?: SharedState;
+  mcpServers?: MCPServerConfig[];
   multimodalInput?: {
     image?: boolean;
     audio?: boolean;
@@ -594,6 +626,10 @@ function useCoAgent(options: UseCoAgentOptions): UseCoAgentReturn;
 function useCoAction(
   toolDef: ToolConfig & { handler: Function },
 ): UseCoActionReturn;
+function useAgentState(
+  agentId: string,
+  baseUrl: string,
+): { state; setState; deleteState; loading; error; refetch };
 function useCapabilities(
   agentId: string,
   baseUrl: string,

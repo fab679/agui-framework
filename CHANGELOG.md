@@ -1,7 +1,13 @@
 # Changelog
 
-## Unreleased
+## [0.2.3] - 2026-07-21
 
+- Added MCP (Model Context Protocol) integration. Agents can now connect to
+  any MCP-compatible tool server via `AgentConfig.mcpServers`. Supports stdio
+  (local subprocess) and streamable HTTP transports. MCP tools are automatically
+  discovered, converted to `ToolConfig`, and made available to the agent during
+  `run` and `stream` execution. Includes `MCPClientManager` for managing
+  connections and tool lifecycle.
 - Added `sharedState?: SharedState` to `AgentConfig`. When configured, the agent
   registers three built-in tools (`setState`, `getState`, `deleteState`) for
   autonomous read/write of a global, thread-independent key-value store.
@@ -10,6 +16,12 @@
   agents and users.
 - Made `ParameterSpec.type` optional to allow JSON properties without a type
   constraint (e.g. `value` parameter in `setState` accepting any JSON type).
+- Added shared state REST endpoints to `AguiServer`: `POST /api/agents/:id/state`
+  (set a key-value pair), `DELETE /api/agents/:id/state/:key` (remove a key).
+- Added `getAgentState()`, `setAgentState()`, `deleteAgentState()` methods to
+  `AguiClient` for client-side shared state access.
+- Added `useAgentState(agentId, baseUrl)` React hook that returns `state`,
+  `setState`, `deleteState`, `loading`, `error`, and `refetch`.
 
 ## [0.2.2] - 2026-07-21
 

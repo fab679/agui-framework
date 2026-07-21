@@ -7,13 +7,13 @@ agui-framework is a TypeScript framework for building AI agent-powered applicati
 ```
 agui-framework
 
-  +----------+  +----------+  +----------+  +------------+
-  |  Agent    |  | EventBus |  |  State   |  |  Protocol   |
-  |           |  |          |  |  Manager |  |  Encoder    |
-  | orchestr- |  | publish/ |  | thread-  |  | SSE encode/ |
-  | ates LLM  |  | subscribe|  | isolated |  | decode      |
-  | + tools   |  | history  |  | key-value|  | validation  |
-  +-----+-----+  +----------+  +----------+  +------------+
+  +----------+  +----------+  +----------+  +------------+  +-------------+  +------------------+
+  |  Agent    |  | EventBus |  |  State   |  |  Protocol   |  |  SharedState|  | MCPClientManager |
+  |           |  |          |  |  Manager |  |  Encoder    |  |  (global,   |  | connects to MCP  |
+  | orchestr- |  | publish/ |  | thread-  |  | SSE encode/ |  |  thread-    |  | servers, auto-   |
+  | ates LLM  |  | subscribe|  | isolated |  | decode      |  |  independent|  | discovers tools  |
+  | + tools   |  | history  |  | key-value|  | validation  |  |  key-value  |  | -> ToolConfig[]  |
+  +-----+-----+  +----------+  +----------+  +------------+  +-------------+  +------------------+
         |
   +-----+----------------------------------------------+
   |              Provider Abstraction Layer              |
@@ -22,15 +22,16 @@ agui-framework
   |  +------+  +---------+  +------+  +----------+      |
   +-----------------------------------------------------+
 
-  +----------+  +--------------+  +--------------------+
-  |Middleware |  |  MultiAgent  |  |  ThreadStore       |
-  |  Chain    |  |  Manager     |  |  (Memory/Redis/PG) |
-  +----------+  +--------------+  +--------------------+
-
-  +--------------+  +----------------------------------+
-  |  AguiClient  |  |  React Hooks (useAgent, useStream)|
-  +--------------+  +----------------------------------+
-  |  AguiWebSocketClient |  Live Agent State API  |
+  +----------+  +--------------+  +--------------------+  +----------------------+
+  |Middleware |  |  MultiAgent  |  |  ThreadStore       |  |  LTMiddleware         |
+  |  Chain    |  |  Manager     |  |  (Memory/Redis/PG) |  |  remember/recall/     |
+  +----------+  +--------------+  +--------------------+  |  forget via Oxigraph  |
+                                                          +----------------------+
+  +--------------+  +------------------------------------------+
+  |  AguiClient  |  |  React Hooks (useAgent, useStream,       |
+  |  + state API |  |            useAgentState, useChat)       |
+  +--------------+  +------------------------------------------+
+  |  AguiWebSocketClient |  Live Agent State API (REST + WS) |
 ```
 
 ## Module Relationships
@@ -41,15 +42,17 @@ agui-framework
 |-------------------|-----------------------|--------------------------------------------------------|
 | `Agent`           | `src/agent.ts`        | Orchestrates LLM calls, tools, events, state, persistence |
 | `EventBus`        | `src/events.ts`       | In-process pub/sub with history and compaction         |
-| `SharedState`     | `src/state.ts`        | Versioned key-value store with diff/merge              |
+| `SharedState`     | `src/state.ts`        | Versioned key-value store with diff/merge; also used as global cross-agent state |
 | `StateManager`    | `src/state.ts`        | Thread-isolated SharedState manager                    |
 | `ProtocolEncoder` | `src/protocol.ts`     | Event serialization, SSE, compaction                   |
 | `ProtocolValidator`| `src/protocol.ts`    | Input validation, event validation                     |
 | `MiddlewareChain` | `src/middleware.ts`    | Composable middleware pipeline                         |
+| `LTMiddleware`    | `src/middleware/ltm.ts`| Oxigraph-based long-term memory with remember/recall/forget tools |
+| `MCPClientManager`| `src/mcp/manager.ts`  | Manages MCP server connections, auto-discovers and registers ToolConfig entries |
 | `MultiAgentManager`| `src/multi-agent.ts` | Agent delegation, cyclic handoff, capability routing, graph execution |
 | `AgentGraph`      | `src/multi-agent.ts`  | Directed graph of agent nodes with conditions          |
 | `DeepAgent`       | `src/multi-agent.ts`  | Autonomous agent with planning, code execution         |
-| `AguiClient`      | `src/client/index.ts` | HTTP client for remote agent execution                 |
+| `AguiClient`      | `src/client/index.ts` | HTTP client for remote agent execution; includes getAgentState/setAgentState/deleteAgentState |
 | `ThreadStore`     | `src/store/types.ts`  | Persistence interface (Memory, Redis, Postgres)        |
 | `Model Catalog`   | `src/models/`         | 44 models across 4 providers with pricing, context windows, capabilities |
 | `Cost Tracking`   | `src/models/cost.ts`  | Token usage cost calculation, formatCost, exceedsContextWindow |
@@ -214,6 +217,120 @@ interface ThreadStore {
 }
 ```
 
+## Global Shared State
+
+In addition to thread-isolated state, agents can share a **global** `SharedState` instance via `AgentConfig.sharedState`. When configured, the agent registers three built-in tools (`setState`, `getState`, `deleteState`) that operate on the global state — independent of any thread.
+
+```
+Agent A                           Agent B
+  |                                  |
+  |-- setState("theme", "dark") -->  |
+  |                                  |
+  |                            SharedState { theme: "dark", ... }
+  |                                  |
+  | <-- getState("theme")           |
+  |      returns "dark"             |
+```
+
+Multiple agents and users can share the same `SharedState` instance. The shape is unknown ahead of time — any JSON-serializable value is accepted.
+
+The global state is also exposed via REST endpoints on `AguiServer`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/agents/:id/state` | Returns full state snapshot (or thread state with `?threadId=`) |
+| `POST` | `/api/agents/:id/state` | Sets a key-value pair (`{ key, value }`) |
+| `DELETE` | `/api/agents/:id/state/:key` | Deletes a key |
+
+Client-side access via `AguiClient`:
+
+```typescript
+const client = new AguiClient('http://localhost:4124')
+await client.setAgentState('agent-id', 'theme', 'dark')
+const state = await client.getAgentState('agent-id')
+await client.deleteAgentState('agent-id', 'theme')
+```
+
+React hook:
+
+```typescript
+function useAgentState(agentId: string, baseUrl: string): {
+  state: Record<string, unknown>
+  setState: (key: string, value: unknown) => Promise<void>
+  deleteState: (key: string) => Promise<void>
+  loading: boolean
+  error: Error | null
+  refetch: () => Promise<void>
+}
+```
+
+## MCP (Model Context Protocol) Integration
+
+Agents can connect to MCP-compatible tool servers at construction time via `AgentConfig.mcpServers`. The `MCPClientManager` handles connection, tool discovery, and lifecycle:
+
+```
+Agent constructor
+  │
+  ├─ MCPClientManager.start(configs)
+  │    ├─ StdioClientTransport ─── MCP Server A (subprocess)
+  │    │    └─ tools/list ──► ToolConfig[] (add, echo, ...)
+  │    │
+  │    └─ StreamableHTTPClientTransport ─── MCP Server B (remote)
+  │         └─ tools/list ──► ToolConfig[] (search, fetch, ...)
+  │
+  ├─ getTools() returns agent tools + MCP tools
+  └─ run()/stream() merges MCP tools into the tool list sent to the LLM
+```
+
+Tool flow:
+
+```
+LLM decides to call MCP tool
+  │
+  ├─ findTool("add") searches agent tools → MCP tools → client tools
+  │
+  └─ handler delegates to MCP client:
+       conn.client.callTool({ name: "add", arguments: { a: 3, b: 4 } })
+       └─ returns result content as string
+```
+
+- Connection failures are non-fatal (logged as warnings)
+- Tools are included in both `run()` and `stream()` pipelines
+- `refreshTools()` re-fetches tool lists when `tools/list_changed` notifications arrive
+- Two transports: `stdio` (local subprocess) and `streamable-http` (remote)
+
+## Long-Term Memory (LTM)
+
+The `createLTMMiddleware(store)` function wraps an agent with three self-managing memory tools backed by an Oxigraph RDF semantic store:
+
+| Tool | Description |
+|------|-------------|
+| `remember` | Stores a fact (subject, predicate, object) with optional TTL |
+| `recall` | Retrieves facts for a user, optionally filtered by predicate |
+| `forget` | Deletes a specific fact |
+
+Memory is multi-tenant — each user's facts live in isolated RDF graphs keyed by `userId`:
+
+```
+Middleware pipeline:
+  LTMiddleware intercepts event generator
+    ├─ Before run: injects user's memories into system instructions
+    ├─ During run: remember/recall/forget tools are available to the LLM
+    └─ After run: memory summary event is emitted
+```
+
+```typescript
+import { OxigraphSemanticStore, createLTMMiddleware } from 'agui-framework'
+
+const store = new OxigraphSemanticStore()
+const agent = new Agent({ ... })
+
+agent.use(createLTMMiddleware(store))
+
+// Agent autonomously calls remember/recall/forget tools
+await agent.run('Remember I like concise answers.', { userId: 'alice' })
+```
+
 ## Model Catalog & Cost Tracking
 
 The `Model Catalog` (`src/models/`) indexes 44 models across 4 providers (OpenAI, Anthropic, Ollama, Fireworks) with metadata:
@@ -262,6 +379,9 @@ The event lifecycle within a single agent run follows this sequence:
 | Custom middleware    | Implement `MiddlewareFunction`                |
 | Custom store         | Implement `ThreadStore` interface             |
 | Custom tools         | Define `ToolConfig` with handler              |
+| MCP tools            | Configure `AgentConfig.mcpServers` to connect to any MCP-compatible server |
+| Global shared state  | Pass a `SharedState` instance via `AgentConfig.sharedState` |
+| Long-term memory     | Use `createLTMMiddleware(store)` with any `SemanticStore` implementation |
 | Custom events        | Emit `CUSTOM` events via `EventBus`           |
 | Sub-agents           | Use `Agent.delegate()` or `AgentGraph`        |
 | React integration    | Use hooks from `agui-framework/client/react`  |

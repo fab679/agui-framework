@@ -314,6 +314,51 @@ When `sharedState` is configured, the agent includes these tools:
 
 The state shape is unknown ahead of time — any JSON-serializable value can be stored (strings, numbers, booleans, objects, arrays, null).
 
+### Client-Side REST API
+
+When using `AguiServer`, the shared state is also accessible via REST endpoints for client-side read/write without involving the LLM:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/agents/:id/state` | Returns the full shared state snapshot (or thread state if `?threadId=` is set) |
+| `POST` | `/api/agents/:id/state` | Sets a key-value pair. Body: `{ key: string, value: any }` |
+| `DELETE` | `/api/agents/:id/state/:key` | Deletes a key from the shared state |
+
+**AguiClient methods:**
+
+```typescript
+const client = new AguiClient('http://localhost:4124')
+
+// Read full state
+const state = await client.getAgentState('agent-id')
+
+// Write a value
+await client.setAgentState('agent-id', 'theme', 'dark')
+
+// Delete a key
+await client.deleteAgentState('agent-id', 'theme')
+```
+
+**React hook:**
+
+```typescript
+import { useAgentState } from 'agui-framework/client/react'
+
+function ThemeToggle({ agentId, baseUrl }: { agentId: string; baseUrl: string }) {
+  const { state, setState, deleteState, loading } = useAgentState(agentId, baseUrl)
+
+  if (loading) return <div>Loading...</div>
+
+  return (
+    <div>
+      <p>Current theme: {state.theme as string}</p>
+      <button onClick={() => setState('theme', 'light')}>Light</button>
+      <button onClick={() => setState('theme', 'dark')}>Dark</button>
+    </div>
+  )
+}
+```
+
 ## Type Reference
 
 ```typescript
