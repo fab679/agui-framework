@@ -1,0 +1,128 @@
+{
+  "name": "agui-framework",
+  "version": "0.2.0",
+  "description": "A TypeScript framework for building AI agent-powered applications. Integrates with multiple LLM providers (OpenAI, Anthropic, Ollama, Fireworks) and implements the AG-UI protocol for real-time frontend communication.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "agui": "./bin/agui.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "default": "./dist/client/index.js"
+    },
+    "./client/react": {
+      "types": "./dist/client/react.d.ts",
+      "import": "./dist/client/react.js",
+      "default": "./dist/client/react.js"
+    },
+    "./store": {
+      "types": "./dist/store/index.d.ts",
+      "import": "./dist/store/index.js",
+      "default": "./dist/store/index.js"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "verify": "npm run lint && npm run build && npm test -- --runInBand",
+    "prepack": "npm run verify",
+    "prepublishOnly": "npm run verify",
+    "serve": "node bin/agui.js serve",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:live": "FIREWORKS_API_KEY=$FIREWORKS_API_KEY jest --testPathPattern=live --verbose",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test:coverage": "jest --coverage --runInBand",
+    "format": "prettier --write src",
+    "example": "tsx examples/basic.ts",
+    "example:stream": "tsx examples/streaming.ts",
+    "example:providers": "tsx examples/multi-provider.ts",
+    "example:express": "tsx examples/express-integration.ts"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "framework",
+    "typescript",
+    "openai",
+    "anthropic",
+    "ollama",
+    "fireworks",
+    "ag-ui",
+    "streaming",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agui-framework/agui-framework.git"
+  },
+  "homepage": "https://github.com/agui-framework/agui-framework#readme",
+  "bugs": {
+    "url": "https://github.com/agui-framework/agui-framework/issues"
+  },
+  "author": "AGUI Framework Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "events": "^3.3.0",
+    "express": "^4.18.0",
+    "ioredis": "^5.11.1",
+    "nanoid": "^5.0.6",
+    "pg": "^8.22.0",
+    "ws": "^8.21.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.17",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "express": "^4.18.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.4.11",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

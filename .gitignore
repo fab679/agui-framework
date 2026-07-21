@@ -1,0 +1,41 @@
+node_modules
+dist
+coverage
+
+# environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# build artifacts
+*.tsbuildinfo
+
+# source code (docs-only repo)
+/src/
+/tests/
+/agents/
+/examples/
+
+# unrelated docs
+/docs/ag-ui/
+/docs/langchain/
+
+# misc
+/Fireworks.md
+/Multu-Agent\ Patterbs.md
+/framework-guides/
