@@ -250,7 +250,7 @@ All summarization config fields are optional. When omitted, the middleware inher
 ```typescript
 const caps = agent.getCapabilities()
 // {
-//   identity: { name: 'gpt-4o', type: 'agui-framework', version: '0.2.0', provider: 'openai' },
+//   identity: { name: 'gpt-4o', type: 'agui-framework', version: '0.2.1', provider: 'openai' },
 //   transport: { streaming: true, resumable: true },
 //   tools: { supported: true, items: [...] },
 //   state: { snapshots: true, deltas: true, memory: true },
