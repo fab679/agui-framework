@@ -1,8 +1,8 @@
 site_name: AGUI Framework
 site_description: A TypeScript SDK for building AI agent-powered applications with multi-provider support, real-time streaming, state management, and the AG-UI protocol.
-site_url: https://agui-framework.github.io/agui-framework
-repo_url: https://github.com/agui-framework/agui-framework
-repo_name: agui-framework/agui-framework
+site_url: https://fab679.github.io/agui-framework
+repo_url: https://github.com/fab679/agui-framework
+repo_name: fab679/agui-framework
 edit_uri: edit/main/docs/
 
 theme:
