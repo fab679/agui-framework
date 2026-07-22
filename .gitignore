@@ -45,7 +45,6 @@ __pycache__/
 /examples/
 
 # unrelated docs
-/docs/ag-ui/
 /docs/langchain/
 
 # misc

@@ -114,7 +114,6 @@ nav:
   - Client SDK:
     - HTTP Client: client-sdk.md
     - React Hooks: react-hooks.md
-  - Examples: examples.md
   - AG-UI Protocol:
     - Agents: ag-ui/Agents.md
     - Events: ag-ui/Events.md
