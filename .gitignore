@@ -25,6 +25,19 @@ Thumbs.db
 # build artifacts
 *.tsbuildinfo
 
+# documentation build output
+/site/
+
+# Python / uv
+uv.lock
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # source code (docs-only repo)
 /src/
 /tests/

@@ -1,0 +1,145 @@
+site_name: AGUI Framework
+site_description: A TypeScript SDK for building AI agent-powered applications with multi-provider support, real-time streaming, state management, and the AG-UI protocol.
+site_url: https://agui-framework.github.io/agui-framework
+repo_url: https://github.com/agui-framework/agui-framework
+repo_name: agui-framework/agui-framework
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  logo: logo.svg
+  favicon: logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/agui-framework/agui-framework
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/agui-framework
+
+copyright: |
+  &copy; 2026 AGUI Framework Team. Distributed under MIT License.
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Core Concepts:
+    - Agent: agents.md
+    - Events: events.md
+    - State Management: state-management.md
+    - Tools: tools.md
+    - Providers: providers.md
+    - Protocol: protocol.md
+  - Architecture: architecture.md
+  - Multi-Agent Patterns: multi-agent.md
+  - MCP Integration: mcp-integration.md
+  - Persistence & Storage: persistence.md
+  - Models & Cost Tracking: models-cost.md
+  - Server: server.md
+  - Client SDK:
+    - HTTP Client: client-sdk.md
+    - React Hooks: react-hooks.md
+  - Examples: examples.md
+  - AG-UI Protocol Specification:
+    - Agents: ag-ui/Agents.md
+    - Events: ag-ui/Events.md
+    - Messages: ag-ui/Messages.md
+    - State Management: ag-ui/State Management.md
+    - Tools: ag-ui/Tools.md
+    - Middleware: ag-ui/Middleware.md
+    - Capabilities: ag-ui/Capabilities.md
+    - Interrupts: ag-ui/Interrupts.md
+    - Reasoning: ag-ui/Reasoning.md
+    - Serialization: ag-ui/Serialization.md
+    - Core Architecture: ag-ui/Core Architecture.md
+    - AI Models Comparison: ag-ui/ai-models-comparison-2026.md
+    - Proposals:
+      - Meta Events: ag-ui/Proposals/Meta Events.md
+      - Generative User Interfaces: ag-ui/Proposals/Generative User Interfaces.md
+  - API Reference: api-reference.md
+  - Legacy Documentation:
+    - Getting Started: ag-ui-framworks-docs/getting-started.md
+    - Agents: ag-ui-framworks-docs/agents.md
+    - Events: ag-ui-framworks-docs/events.md
+    - State Management: ag-ui-framworks-docs/state-management.md
+    - Tools: ag-ui-framworks-docs/tools.md
+    - Providers: ag-ui-framworks-docs/providers.md
+    - Protocol: ag-ui-framworks-docs/protocol.md
+    - Architecture: ag-ui-framworks-docs/architecture.md
+    - Examples: ag-ui-framworks-docs/examples.md
+    - API Reference: ag-ui-framworks-docs/api-reference.md
+  - Future Integrations: future-integrations.md

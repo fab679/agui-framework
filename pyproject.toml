@@ -1,0 +1,9 @@
+[project]
+name = "agui-framework-docs"
+version = "0.1.0"
+description = "AGUI Framework documentation site"
+requires-python = ">=3.9"
+dependencies = [
+    "mkdocs-material~=9.0",
+    "mkdocs-minify-plugin>=0.7.0",
+]

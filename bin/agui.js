@@ -24,8 +24,19 @@ async function serveCommand(args) {
   const port = portIndex >= 0 ? parseInt(args[portIndex + 1]) : 4124
 
   const { AguiServer } = await import('../dist/server/index.js')
+  const { RedisThreadStore, PostgresThreadStore } = await import('../dist/store/index.js')
 
-  const server = new AguiServer({ port })
+  // Auto-configure persistent store from environment variables
+  let store
+  if (process.env.AGUI_REDIS_URL) {
+    store = new RedisThreadStore({ url: process.env.AGUI_REDIS_URL })
+    console.log(`[Agui CLI] Using RedisThreadStore: ${process.env.AGUI_REDIS_URL}`)
+  } else if (process.env.AGUI_POSTGRES_URL) {
+    store = new PostgresThreadStore({ url: process.env.AGUI_POSTGRES_URL })
+    console.log(`[Agui CLI] Using PostgresThreadStore`)
+  }
+
+  const server = new AguiServer({ port, store })
 
   try {
     await server.loadAndRegister(configPath)
