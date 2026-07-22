@@ -38,7 +38,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-# source code (docs-only repo)
+# source code (docs-only repo — actual files removed from git)
 /src/
 /tests/
 /agents/
