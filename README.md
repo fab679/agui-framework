@@ -4,6 +4,18 @@
   <img src="docs/logo.svg" alt="agui-framework" width="200"/>
 </p>
 
+<p align="center">
+  <a href="https://fab679.github.io/agui-framework">
+    <img src="https://img.shields.io/badge/docs-mkdocs%20material-blue?style=for-the-badge" alt="Documentation">
+  </a>
+  <a href="https://www.npmjs.com/package/agui-framework">
+    <img src="https://img.shields.io/npm/v/agui-framework?style=for-the-badge" alt="npm">
+  </a>
+  <a href="https://github.com/fab679/agui-framework/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/fab679/agui-framework?style=for-the-badge" alt="MIT License">
+  </a>
+</p>
+
 A TypeScript SDK for building AI agent-powered applications. agui-framework provides a complete toolkit for creating, orchestrating, and deploying LLM-based agents with multi-provider support, real-time streaming, state management, persistence, and the AG-UI protocol for frontend communication.
 
 ## Features
