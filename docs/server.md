@@ -32,11 +32,15 @@ console.log("Server running on http://localhost:4124");
 interface ServerConfig {
   port: number;             // Server port (default: 4124)
   agents: AgentRegistration[]; // Agent definitions or paths
+  store?: ThreadStore;      // Persistence backend (optional)
   apiKey?: string;          // API key authentication
   cors?: CorsOptions;       // CORS configuration
   rateLimit?: RateLimitConfig; // Rate limiting
 }
 ```
+
+!!! note "Persistence with `agui serve`"
+    When using the CLI, a `ThreadStore` is **optional**. Without one, the server uses in-memory storage — data is lost on restart. To enable persistence, set `AGUI_REDIS_URL` or `AGUI_POSTGRES_URL` environment variables, or pass a `store` instance to `AguiServer` directly.
 
 ## Loading Agents
 

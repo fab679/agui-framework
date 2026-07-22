@@ -110,15 +110,16 @@ nav:
   - Persistence & Storage: persistence.md
   - Models & Cost Tracking: models-cost.md
   - Server: server.md
+  - Deployment: deployment.md
   - Client SDK:
     - HTTP Client: client-sdk.md
     - React Hooks: react-hooks.md
   - Examples: examples.md
-  - AG-UI Protocol Specification:
+  - AG-UI Protocol:
     - Agents: ag-ui/Agents.md
     - Events: ag-ui/Events.md
     - Messages: ag-ui/Messages.md
-    - State Management: ag-ui/State Management.md
+    - State: ag-ui/State Management.md
     - Tools: ag-ui/Tools.md
     - Middleware: ag-ui/Middleware.md
     - Capabilities: ag-ui/Capabilities.md
@@ -126,20 +127,4 @@ nav:
     - Reasoning: ag-ui/Reasoning.md
     - Serialization: ag-ui/Serialization.md
     - Core Architecture: ag-ui/Core Architecture.md
-    - AI Models Comparison: ag-ui/ai-models-comparison-2026.md
-    - Proposals:
-      - Meta Events: ag-ui/Proposals/Meta Events.md
-      - Generative User Interfaces: ag-ui/Proposals/Generative User Interfaces.md
   - API Reference: api-reference.md
-  - Legacy Documentation:
-    - Getting Started: ag-ui-framworks-docs/getting-started.md
-    - Agents: ag-ui-framworks-docs/agents.md
-    - Events: ag-ui-framworks-docs/events.md
-    - State Management: ag-ui-framworks-docs/state-management.md
-    - Tools: ag-ui-framworks-docs/tools.md
-    - Providers: ag-ui-framworks-docs/providers.md
-    - Protocol: ag-ui-framworks-docs/protocol.md
-    - Architecture: ag-ui-framworks-docs/architecture.md
-    - Examples: ag-ui-framworks-docs/examples.md
-    - API Reference: ag-ui-framworks-docs/api-reference.md
-  - Future Integrations: future-integrations.md
