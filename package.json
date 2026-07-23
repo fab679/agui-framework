@@ -1,6 +1,6 @@
 {
   "name": "agui-framework",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "A TypeScript framework for building AI agent-powered applications. Integrates with multiple LLM providers (OpenAI, Anthropic, Ollama, Fireworks) and implements the AG-UI protocol for real-time frontend communication.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

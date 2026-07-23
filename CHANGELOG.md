@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.9] - 2026-07-23
+## [0.3.0] - 2026-07-23
 
 - **Breaking**: `StreamCallbacks.onEvent` and `handleEvent` in React hooks now
   typed as `(event: AgentEvent)` instead of `(event: any)`. TypeScript narrows
@@ -30,6 +30,9 @@
   (`Reasoner`), multi-endpoint store (`SemanticStore`), declarative JSON config
   with env-var interpolation (`buildStore`), 14 standalone tools (`createTools`),
   and a one-call factory with DeepAgent planning (`createSemanticAgent`).
+- **SparqlEngine prefix fix**: Fixed single-arg constructor that overwrote custom
+  prefixes. `new SparqlEngine({ eg: 'http://example.org/' })` now correctly
+  preserves `eg:` prefix instead of resetting to defaults.
 - **React ChatMessage type**: Added `agentId`, `runId`, `parentRunId`,
   `activities` fields.
 - **Client type safety**: Removed `any` casts from error handling in resume/run.
