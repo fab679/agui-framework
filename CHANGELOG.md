@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.2.9] - 2026-07-23
+
+- **Breaking**: `StreamCallbacks.onEvent` and `handleEvent` in React hooks now
+  typed as `(event: AgentEvent)` instead of `(event: any)`. TypeScript narrows
+  properly per case branch — catches property-access typos at compile time.
+- **Breaking**: `AguiClient.run()` and `resume()` return `events: AgentEvent[]`
+  instead of `events: any[]`. Server `RunResponse.events` similarly typed.
+- **Breaking**: `agentId` added to `BaseMessage` — every stored message now
+  carries the ID of the agent that produced it. Also added `runId` and
+  `parentRunId` for reconstructing delegation trees from message history alone.
+- **Multi-agent delegation fix**: `AGENT_DELEGATION_END` and
+  `AGENT_HANDOFF_RESULT` event handlers in React `useChat` now match by
+  `parentAgent+childAgent` / `fromAgent+toAgent` instead of last array index.
+  Fixes deeply nested delegations (A→B→C).
+- **AgentGraph events**: `runAgentGraph()` now relays events through the
+  manager's EventBus, so graph delegation events reach the client.
+- **DeepAgent events**: DeepAgent's EventBus now relays through the wrapped
+  agent's EventBus, so `ACTIVITY_SNAPSHOT` (planning) events reach the client.
+- **ACTIVITY_SNAPSHOT handling**: Added `streamingActivities` state and
+  `ChatMessage.activities` to React `useChat` hook, with `replace` support.
+- **onInterrupt wired**: `useStream` now detects `HUMAN_INTERVENTION_REQUEST`
+  events and calls `opts.onInterrupt`.
+- **Server passes agentId**: REST, SSE, and WebSocket server endpoints now pass
+  `agentId` in the run context, so server-initiated runs tag messages properly.
+- **Semantic RAG module**: New `src/semantic/` module with pluggable RDF engine
+  abstraction (`RdfEngine`), in-process oxigraph backend (`SparqlEngine`),
+  remote SPARQL 1.1 client (`SparqlEndpointClient`), RDFS/OWL RL reasoner
+  (`Reasoner`), multi-endpoint store (`SemanticStore`), declarative JSON config
+  with env-var interpolation (`buildStore`), 14 standalone tools (`createTools`),
+  and a one-call factory with DeepAgent planning (`createSemanticAgent`).
+- **React ChatMessage type**: Added `agentId`, `runId`, `parentRunId`,
+  `activities` fields.
+- **Client type safety**: Removed `any` casts from error handling in resume/run.
+  Fixed `getThreadRuns` and `getThreadStats` return types. Added missing fields
+  to `listThreads` return type.
+- **Documentation**: Added Examples section (Semantic RAG), Integrations page
+  (React, Next.js, Express), API key/auth docs for SPARQL endpoints.
+
 ## [0.2.3] - 2026-07-21
 
 - Added MCP (Model Context Protocol) integration. Agents can now connect to

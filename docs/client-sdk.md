@@ -71,8 +71,11 @@ const newThread = await client.createThread({
 // Delete thread
 await client.deleteThread("thread-123");
 
-// Get messages
+// Get messages — each message carries an optional agentId identifying which agent produced it
 const messages = await client.threadMessages("thread-123");
+for (const msg of messages) {
+  console.log(msg.agentId ? `[${msg.agentId}]` : '', msg.role, ':', msg.content);
+}
 
 // Get runs (with usage/cost data)
 const runs = await client.threadRuns("thread-123");
@@ -149,16 +152,30 @@ const client = createClient("http://localhost:4124");
 
 ## Stream Callbacks
 
-The stream method accepts callback options:
+The `stream()` method accepts a `StreamCallbacks` object:
 
 ```typescript
-client.stream("assistant", {
-  prompt: "Tell me a story",
-}, {
-  onChunk: (chunk: string) => process.stdout.write(chunk),
+interface StreamCallbacks {
+  onEvent?: (event: AgentEvent) => void    // Raw agent events (tool calls, state snapshots, delegations, handoffs, etc.)
+  onChunk?: (delta: string) => void         // Text content deltas as they stream
+  onDone?: (result: string, threadId?: string) => void  // Stream completed
+  onError?: (error: Error) => void           // Stream error
+}
+```
+
+```typescript
+import { AguiClient } from "agui-framework/client";
+import type { AgentEvent } from "agui-framework";
+
+const client = new AguiClient("http://localhost:4124");
+
+client.stream("assistant", "Tell me a story", {
+  onChunk: (chunk) => process.stdout.write(chunk),
   onEvent: (event: AgentEvent) => console.log("Event:", event.type),
-  onError: (error: Error) => console.error("Error:", error),
-  onComplete: () => console.log("Done!"),
+  onDone: (result) => console.log("Done:", result),
+  onError: (error) => console.error("Error:", error),
+}, {
+  threadId: "thread-123",
 });
 ```
 

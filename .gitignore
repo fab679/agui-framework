@@ -42,7 +42,7 @@ __pycache__/
 /src/
 /tests/
 /agents/
-/examples/
+
 
 # unrelated docs
 /docs/langchain/

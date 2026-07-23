@@ -155,6 +155,47 @@ Main Agent
   └─► Graph execution (conditional edges)
 ```
 
+## Agent Identity on Messages
+
+Each message stored in thread history carries an optional `agentId` field identifying which agent produced it. This is automatically populated in multi-agent flows:
+
+- `MultiAgentManager.runAgent()` and `streamAgent()` pass `agentId` in the run context
+- Delegation tools (`createDelegationTool()`) set `agentId` to the delegate agent
+- `Agent.delegate()` tags sub-agent messages with the sub-agent's name
+- REST and SSE server endpoints set `agentId` from the route parameter
+
+Each message also carries `runId` (the specific run instance that produced it) and `parentRunId` (the parent agent's run ID when this message came from a delegated sub-agent). This lets you reconstruct the full delegation tree from message history alone:
+
+```typescript
+// Root messages have no parentRunId
+const rootMsgs = messages.filter(m => !m.parentRunId)
+
+// Group by runId — all messages from the same run
+const byRun = new Map<string, ChatMessage[]>()
+for (const msg of messages) {
+  const key = msg.runId || 'root'
+  if (!byRun.has(key)) byRun.set(key, [])
+  byRun.get(key)!.push(msg)
+}
+
+// Link children to parents via parentRunId → runId
+for (const msg of messages) {
+  if (msg.parentRunId) {
+    console.log(`${msg.agentId}'s run ${msg.runId} was delegated by ${byRun.get(msg.parentRunId)?.[0]?.agentId}`)
+  }
+}
+```
+
+Messages without `agentId`/`runId`/`parentRunId` (single-agent runs) will have those fields undefined. In React, all three are available on every `ChatMessage`:
+
+```typescript
+messages.map(msg => console.log(
+  `${msg.agentId || 'default'} [run: ${msg.runId || 'N/A'}]${msg.parentRunId ? ` (delegated by run ${msg.parentRunId})` : ''}: ${msg.content}`
+))
+```
+
+The client can also reconstruct the agent execution tree by correlating `AGENT_DELEGATION_START`/`END` events (from `onEvent`) with `agentId` changes in the message stream.
+
 ## API Reference
 
 ### `MultiAgentManager`

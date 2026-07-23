@@ -16,7 +16,8 @@ import { useChat, useStream, useThread, useCoAgent, useWebSocket, ... } from "ag
 
 ## useChat
 
-The primary chat hook for building conversational interfaces:
+The primary chat hook for building conversational interfaces. Each `ChatMessage` in the `messages` array includes
+an optional `agentId` field identifying which agent produced the message — useful in multi-agent scenarios:
 
 ```typescript
 import { useChat } from "agui-framework/client/react";
@@ -30,7 +31,7 @@ function Chat() {
   return (
     <div>
       {messages.map((msg, i) => (
-        <div key={i}>{msg.role}: {msg.content}</div>
+        <div key={i}>{msg.agentId ? `${msg.agentId}: ` : ''}{msg.role}: {msg.content}</div>
       ))}
       <input value={input} onChange={(e) => setInput(e.target.value)} />
       <button onClick={send} disabled={isLoading}>Send</button>
@@ -39,9 +40,27 @@ function Chat() {
 }
 ```
 
+### ChatMessage type
+
+Messages returned by `useChat` and `useThread` conform to this interface:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique message identifier |
+| `role` | `string` | Message role (`user`, `assistant`, `system`, `tool`, etc.) |
+| `content` | `string` | Message text content |
+| `agentId` | `string` (optional) | ID of the agent that produced this message (populated in multi-agent runs) |
+| `runId` | `string` (optional) | Unique ID of the agent run that produced this message |
+| `parentRunId` | `string` (optional) | Run ID of the parent agent that delegated to this one (for reconstructing delegation trees) |
+| `toolCalls` | `array` (optional) | Tool calls made during this message |
+| `reasoning` | `string` (optional) | Chain-of-thought reasoning from the model |
+| `delegations` | `array` (optional) | Agent delegations that occurred during this message |
+| `handoffs` | `array` (optional) | Agent handoffs that occurred during this message |
+| `activities` | `array` (optional) | Activity/planning snapshots from `DeepAgent` |
+
 ## useStream
 
-Stream agent responses token by token:
+Stream agent responses token by token, with callbacks for events, interrupts, and completion:
 
 ```typescript
 import { useStream } from "agui-framework/client/react";
@@ -50,9 +69,12 @@ function StreamingChat() {
   const { start, stop, isLoading, error, result } = useStream();
 
   const handleSend = () => {
-    start("assistant", {
-      prompt: "Tell me a story",
+    start("Tell me a story", {
       baseUrl: "http://localhost:4124",
+      agentId: "assistant",
+      onChunk: (delta) => console.log("token:", delta),
+      onInterrupt: (interrupt) => console.log("interrupt:", interrupt),
+      onComplete: (text) => console.log("done:", text),
     });
   };
 

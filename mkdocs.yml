@@ -126,4 +126,7 @@ nav:
     - Reasoning: ag-ui/Reasoning.md
     - Serialization: ag-ui/Serialization.md
     - Core Architecture: ag-ui/Core Architecture.md
+  - Integrations: integrations.md
+  - Examples:
+    - Semantic RAG: examples/semantic-rag.md
   - API Reference: api-reference.md
