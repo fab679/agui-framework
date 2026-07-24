@@ -26,7 +26,8 @@ A **TypeScript SDK** for building AI agent-powered applications. AGUI Framework 
 -   :material-server: **HTTP/WebSocket Server** -- Express-based `AguiServer` with REST API, SSE streaming, and WebSocket agent communication.
 -   :material-book: **Model Catalog** -- 44+ models across 4 providers with pricing, context windows, and capabilities.
 -   :material-currency-usd: **Cost & Usage Tracking** -- Per-run token usage, cost calculation, cumulative thread cost, budget limits.
--   :material-react: **React Hooks** -- `useStream`, `useThread`, `useInterrupts`, `useCoAgent`, `useWebSocket`, `useAgentState`, `useRunningAgents`, `useLiveState`, and more.
+-   :material-react: **React Hooks** -- `useStream`, `useThread`, `useInterrupts`, `useCoAgent`, `useWebSocket`, `useAgentState`, `useRunningAgents`, `useLiveState`, `useGeneratedUI`, and more.
+-   :material-wand: **Generative User Interfaces** -- Agents dynamically generate forms, wizards, and interactive UIs at runtime without custom tool renderers.
 -   :material-shield-check: **Type Safety** -- Full TypeScript with strict types across all modules.
 
 </div>
@@ -116,4 +117,5 @@ console.log(response);
 | [Architecture](architecture.md) | Module relationships, data flow, extension points |
 | [Multi-Agent Patterns](multi-agent.md) | Delegation, handoff, graph workflows |
 | [Server](server.md) | HTTP/WebSocket server setup and API |
+| [Generative UI](generative-ui.md) | AI-generated interfaces — forms, wizards, and interactive UIs at runtime |
 | [API Reference](api-reference.md) | Complete API reference organized by module |

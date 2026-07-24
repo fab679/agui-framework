@@ -117,15 +117,44 @@ const reply = await agent2.run("What is my favorite color?");
 
 This enables multi-agent scenarios where agents share context without explicit thread scoping.
 
-## Thread State (REST API)
+## Accessing State from Tool Handlers
 
-When using the `AguiServer`, thread state is accessible via REST API:
+Tool handlers can access the agent's `SharedState` and `StateManager` directly:
+
+```typescript
+tools: [{
+  name: "update_profile",
+  description: "Update user profile",
+  parameters: { ... },
+  handler: async ({ key, value }, context) => {
+    // Access agent-level shared state (all threads)
+    const profile = agent.sharedState.get('userProfile')
+    agent.sharedState.set('userProfile', { ...profile, [key]: value })
+
+    // Access thread-scoped state via StateManager
+    const threadData = await agent.stateManager.get(context.threadId)
+    await agent.stateManager.set(context.threadId, {
+      ...threadData, lastAction: key
+    })
+
+    return { success: true }
+  },
+}]
+```
+
+When `sharedState` is configured, the agent auto-registers `get_state`, `set_state`, `delete_state`, and `list_state_keys` tools for the LLM to use.
+
+## Agent State via REST API
+
+When using the `AguiServer`, agent state is accessible via REST:
 
 ```
-GET  /api/threads/:id/state    → Get thread state
-PUT  /api/threads/:id/state    → Update thread state
-POST /api/threads/:id/state    → Merge into thread state
+GET    /api/agents/:id/state              → Get live execution state + shared state snapshot
+POST   /api/agents/:id/state              → Set a key-value pair (body: { key, value })
+DELETE /api/agents/:id/state/:key         → Delete a key from shared state
 ```
+
+The `GET` endpoint optionally accepts `?threadId=` to scope results to a specific thread.
 
 ## API Reference
 

@@ -21,7 +21,8 @@ async function serveCommand(args) {
   const pkg = loadPackageJson(process.cwd())
   const configPath = args.find(a => a.startsWith('--config='))?.split('=')[1] || args.find(a => a.startsWith('--config '))?.split(' ')[1]
   const portIndex = args.indexOf('--port')
-  const port = portIndex >= 0 ? parseInt(args[portIndex + 1]) : 4124
+  const portArg = args.find(a => a.startsWith('--port='))
+  const port = portArg ? parseInt(portArg.split('=')[1]) : portIndex >= 0 ? parseInt(args[portIndex + 1]) : 4124
 
   const { AguiServer } = await import('../dist/server/index.js')
   const { RedisThreadStore, PostgresThreadStore } = await import('../dist/store/index.js')

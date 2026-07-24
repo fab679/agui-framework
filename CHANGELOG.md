@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.3.3] - 2026-07-24
+
+- **Added**: Branching chat — `forkFrom: { checkpointId }` on client SDK `run()`, `stream()`, `streamDetached()` and `useChat.sendMessage()`. Every run emits a `CHECKPOINT` event. Messages carry `parentCheckpointId`/`checkpointId` for branch reconstruction. All stores (Memory, Postgres, Redis) persist the new fields automatically.
+- **Added**: `parentCheckpointId` and `checkpointId` fields to `Message` and `ChatMessage` interfaces.
+- **Added**: `CheckpointEvent` type to `AgentEvent` union.
+- **Added**: `latestCheckpointId` to `useChat` return value.
+- **Added**: Client-server routing guide (`docs/routing.md`) with React Router and Next.js examples.
+- **Fixed**: `POST /api/threads` endpoint now correctly stores caller identity as `ownerId` instead of `agentId`.
+- **Fixed**: `ensureThread` now passes `ownerId` to persistent store at the correct argument position.
+- **Fixed**: Thread preload on startup now preserves `ownerId` from persistent store.
+- **Fixed**: `forkFrom` message trimming no longer matches on `parentCheckpointId` — only exact `checkpointId` match.
+- **Fixed**: `filterMessagesForCheckpoint` algorithm now uses tree-traversal (ancestor chain) instead of chronological walk, correctly isolating sibling branches.
+
+## [0.3.2] - 2026-07-23
+
+- **Fixed**: `SparqlEndpointClient` missing default `User-Agent` header causing
+  403 on Wikidata and other strict endpoints. Added `'User-Agent': 'agui-framework/0.3.2'`
+  overridable via `headers` option.
+- **Fixed**: `createSemanticAgent` skipped Reasoner and semantic tools when only
+  `tools` were provided. Now always creates a default `SparqlEngine` so the full
+  toolset is always generated.
+- **Fixed**: `SemanticAgentConfig.engine` typed as `SparqlEngine` instead of
+  `RdfEngine`. Changed to `RdfEngine` so `SparqlEndpointClient` and custom
+  `RdfEngine` implementations are accepted.
+
+## [0.3.1] - 2026-07-23
+
+- **Fixed**: `SparqlEngine` single-arg constructor overwrote custom prefixes.
+  Removed unconditional line after if/else that reset prefixes to defaults.
+- **Fixed**: `SemanticStore` type/value collision with `store/semantic-types.ts`.
+  Renamed memory store interface to `AgentMemoryStore` to avoid shadowing the class export.
+- **Fixed**: `createSemanticAgent()` returning `DeepAgent` rejected by server loader.
+  Added `instanceof DeepAgent` and `instanceof MultiAgentManager` checks to `normalizeAgent()`.
+- **Fixed**: Thread `agentId` discarded on server startup from persistent store.
+  `t.agentId` is now propagated into in-memory thread metadata.
+- **Fixed**: Legacy threads (no `agentId`) filtered out by `GET /api/threads?agentId=X`.
+  Filter now skips threads with undefined `agentId` instead of excluding them.
+- **Fixed**: `DELETE /api/threads` silently swallowed Redis errors.
+  Added error logging to the catch block.
+- **Fixed**: CLI `--port=VALUE` format not parsed. Added `startsWith('--port=')` fallback.
+
 ## [0.3.0] - 2026-07-23
 
 - **Breaking**: `StreamCallbacks.onEvent` and `handleEvent` in React hooks now

@@ -547,9 +547,10 @@ interface ThreadStore {
     threadId: string,
     metadata?: Record<string, unknown>,
     agentId?: string,
+    ownerId?: string,
   ): Promise<ThreadData>;
   getThread(threadId: string): Promise<ThreadData | null>;
-  listThreads(limit?: number, offset?: number): Promise<ThreadData[]>;
+  listThreads(limit?: number, offset?: number, agentId?: string, userId?: string): Promise<ThreadData[]>;
   deleteThread(threadId: string): Promise<void>;
   appendMessages(threadId: string, messages: Message[]): Promise<void>;
   getMessages(

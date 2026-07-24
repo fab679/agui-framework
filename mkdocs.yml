@@ -110,10 +110,14 @@ nav:
   - Persistence & Storage: persistence.md
   - Models & Cost Tracking: models-cost.md
   - Server: server.md
+  - Generative UI: generative-ui.md
+  - Join & Rejoin Streams: join-rejoin.md
+  - Meta Events: meta-events.md
   - Deployment: deployment.md
   - Client SDK:
     - HTTP Client: client-sdk.md
     - React Hooks: react-hooks.md
+    - Client-Side Routing: routing.md
   - AG-UI Protocol:
     - Agents: ag-ui/Agents.md
     - Events: ag-ui/Events.md

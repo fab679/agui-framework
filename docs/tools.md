@@ -20,11 +20,70 @@ const weatherTool: ToolConfig = {
     },
     required: ["city"],
   },
-  handler: async ({ city, units }) => {
+  handler: async ({ city, units }, context) => {
+    // context.userId    → identity of the caller (from server resolveIdentity)
+    // context.threadId  → current conversation thread
+    // context.agentId   → which agent is running
+    // context.runId     → unique run identifier
+    // context.metadata  → custom data passed at runtime
+    // context.signal    → AbortSignal for cancellation
     const temperature = units === "fahrenheit" ? 72 : 22;
     return { city, temperature, conditions: "sunny" };
   },
 };
+```
+
+### Handler Signature
+
+Every tool handler receives **two arguments**:
+
+```typescript
+handler: (
+  args: Record<string, unknown>,         // Tool arguments from the LLM
+  context: RunContext                     // Runtime context for the current run
+) => Promise<unknown>
+```
+
+### RunContext
+
+The `RunContext` interface provides full visibility into the current execution:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `threadId` | `string` | Current conversation thread |
+| `runId` | `string` | Unique run identifier |
+| `parentRunId` | `string?` | Run ID of the delegating parent agent |
+| `agentId` | `string?` | ID of the agent executing this run |
+| `userId` | `string?` | Caller identity (resolved by server's `resolveIdentity` or falls back to IP) |
+| `metadata` | `Record<string, unknown>?` | Arbitrary custom data passed at runtime |
+| `signal` | `AbortSignal?` | Cancels provider I/O on client disconnect |
+| `modelSettings` | `Record<string, unknown>?` | Model configuration overrides |
+| `capabilities` | `string[]?` | Agent's capability strings |
+| `deps` | `unknown?` | Shared dependency container |
+| `clientTools` | `ToolConfig[]?` | Client-provided tools injected at runtime |
+| `outputFormat` | `string?` | Requested output MIME type |
+| `feedback` | `object?` | Human feedback for the current run |
+| `resume` | `ResumeEntry[]?` | Pending resume entries for interrupted tools |
+
+### Passing Custom Context
+
+When calling `agent.run()` or `agent.stream()`, any extra keys you pass in the context object flow through to the tool handler:
+
+```typescript
+// From the server or direct agent usage
+const context = {
+  threadId: 'thread-123',
+  userId: 'user_789',
+  agentId: 'my-agent',
+  metadata: { role: 'admin', tenant: 'acme-corp', requestId: 'req_001' },
+};
+await agent.run('Analyze this data', context);
+
+// In your tool handler:
+handler: async (args, context) => {
+  context.metadata?.role      // 'admin'
+  context.metadata?.tenant    // 'acme-corp'
+}
 ```
 
 ### Handler Return Values
@@ -102,6 +161,41 @@ const handoffTool = mainAgent.createHandoffTool(
 
 Handoffs throw a `HandoffRequested` error that the runtime catches to transfer execution to the target agent.
 
+## Shared State Access from Tools
+
+Tools can read and write shared state when the agent has `sharedState` configured:
+
+```typescript
+import { Agent } from "agui-framework";
+
+const agent = new Agent({
+  model: "gpt-4o",
+  provider: "openai",
+  sharedState: { userProfile: {}, analytics: {} },
+  tools: [{
+    name: "update_profile",
+    description: "Update the user's profile",
+    parameters: { ... },
+    handler: async ({ key, value }, context) => {
+      // Read shared state
+      const profile = agent.sharedState.get('userProfile');
+
+      // Write shared state
+      agent.sharedState.set('userProfile', { ...profile, [key]: value });
+
+      // Using StateManager for thread-scoped state
+      const stateManager = agent.stateManager;
+      const threadData = await stateManager.get(context.threadId);
+      await stateManager.set(context.threadId, { ...threadData, lastAction: key });
+
+      return { success: true };
+    },
+  }],
+});
+```
+
+> **Note:** When `sharedState` is configured, the agent auto-registers state management tools (`get_state`, `set_state`, `delete_state`, `list_state` keys) accessible to the LLM. See [State Management](state-management.md) for details.
+
 ## Filtering Tools
 
 Use middleware to restrict which tools are available:
@@ -149,5 +243,5 @@ const allTools = agent.getTools();
 | `name` | `string` | Unique tool name |
 | `description` | `string` | Description for the LLM |
 | `parameters` | `JSONSchema` | JSON Schema for tool arguments |
-| `handler` | `(args) => Promise<any>` | Handler function |
+| `handler` | `(args, context: RunContext) => Promise<any>` | Handler function receiving args + runtime context |
 | `interrupt` | `boolean` | Whether tool requires interruption |
